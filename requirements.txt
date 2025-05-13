@@ -9,9 +9,6 @@ openai
 # Grok Integration
 langchain-xai
 
-# Anthropic Integration
-langchain-anthropic
-
 # Google Gemini (PaLM) Integration
 langchain-google-genai
 google-generativeai
