@@ -1,2 +1,5 @@
 .env
 langchain
+RAG_components/vector-db/.ipynb_checkpoints/
+RAG_components/vector-db/my_chroma_db/
+__pycache__
