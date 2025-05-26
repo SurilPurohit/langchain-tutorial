@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Path, HTTPException, Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, computed_field
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Optional
 import json
 
 app = FastAPI()
@@ -34,6 +34,14 @@ class User(BaseModel):
             return 'Normal'
         else:
             return 'Obese'
+
+class userUpdate(BaseModel):
+    name: Annotated[Optional[str], Field(default=None)]
+    city: Annotated[Optional[str], Field(default=None)]
+    age: Annotated[Optional[int], Field(default=None, gt=0)]
+    gender: Annotated[Optional[Literal['male', 'female']], Field(default=None)]
+    height: Annotated[Optional[float], Field(default=None, gt=0)]
+    weight: Annotated[Optional[float], Field(default=None, gt=0)]
 
 def load_data():
     with open('users.json', 'r') as f:
@@ -104,3 +112,48 @@ def create_user(user: User):
     save_data(data)
 
     return JSONResponse(status_code=201, content={'message':'user created successfully'})
+
+@app.put('/edit/{user_id}')
+def update_user(user_id: str, user_update: userUpdate):
+
+    data = load_data()
+
+    if user_id not in data:
+        raise HTTPException(status_code=404, detail='user not found')
+    
+    existing_user_info = data[user_id]
+
+    updated_user_info = user_update.model_dump(exclude_unset=True)
+
+    for key, value in updated_user_info.items():
+        existing_user_info[key] = value
+
+    #existing_user_info -> pydantic object -> updated bmi + verdict
+    existing_user_info['id'] = user_id
+    user_pydandic_obj = User(**existing_user_info)
+    #-> pydantic object -> dict
+    existing_user_info = user_pydandic_obj.model_dump(exclude='id')
+
+    # add this dict to data
+    data[user_id] = existing_user_info
+
+    # save data
+    save_data(data)
+
+    return JSONResponse(status_code=200, content={'message':'user updated'})
+
+
+@app.delete('/delete/{user_id}')
+def delete_user(user_id: str):
+
+    # load data
+    data = load_data()
+
+    if user_id not in data:
+        raise HTTPException(status_code=404, detail='user not found')
+    
+    del data[user_id]
+
+    save_data(data)
+
+    return JSONResponse(status_code=200, content={'message':'user deleted'})
